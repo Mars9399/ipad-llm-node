@@ -117,3 +117,5 @@ __pycache__/
 model-management-verification.json
 
 *-verification.json
+
+*.partial

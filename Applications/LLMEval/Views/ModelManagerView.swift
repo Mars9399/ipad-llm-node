@@ -12,14 +12,14 @@ struct ModelManagerView: View {
             List {
                 Section {
                     Text("选择模型，下载完成后点“加载”。内存中只保留一个模型；切换会取消当前生成。")
-                    Text("请保持 App 前台。下载取消后可以重试，已完成文件会复用。")
+                    Text("请保持 App 前台。下载并校验完成后才能加载；取消或断线后可继续下载。")
                         .font(.caption).foregroundStyle(.secondary)
                     Text("可用存储：" + ByteCountFormatter.string(fromByteCount: models.freeDiskBytes, countStyle: .file))
                     if !models.message.isEmpty { Text(models.message).textSelection(.enabled) }
                     if models.downloadingID != nil {
                         ProgressView(value: models.progress)
                         HStack {
-                            Text(models.phase)
+                            Text(models.phase + " · " + ByteCountFormatter.string(fromByteCount: models.downloadedBytes, countStyle: .file) + " / " + ByteCountFormatter.string(fromByteCount: models.totalDownloadBytes, countStyle: .file))
                             Spacer()
                             Button("取消下载", role: .cancel) { models.cancelDownload() }
                                 .accessibilityIdentifier("modelManager.cancel")
@@ -46,22 +46,29 @@ struct ModelManagerView: View {
                                     .font(.caption).foregroundStyle(.secondary)
                             }
                             HStack {
-                                if models.installedIDs.contains(model.id) {
-                                    Label("已安装", systemImage: "checkmark.circle")
-                                    Button(model.id == models.active.id ? "重新加载" : "加载") {
-                                        Task { await node.switchModel(to: model.id, evaluator: llm) }
-                                    }.accessibilityIdentifier("modelManager.activate." + model.id)
+                                let installed = models.installedIDs.contains(model.id)
+                                if installed {
+                                    Label("已校验", systemImage: "checkmark.circle")
                                 } else {
-                                    Button("下载") {
+                                    Button(models.savedBytes(for: model) > 0 ? "继续下载" : "下载") {
                                         do { try models.startDownload(model.id) }
                                         catch { models.report(error.localizedDescription) }
                                     }.accessibilityIdentifier("modelManager.download." + model.id)
                                 }
+                                Button(model.id == models.active.id ? "重新加载" : "加载") {
+                                    Task { await node.switchModel(to: model.id, evaluator: llm) }
+                                }
+                                .disabled(!installed)
+                                .accessibilityIdentifier("modelManager.activate." + model.id)
                                 Spacer()
                                 Button("删除下载", role: .destructive) { deleting = model }
                                     .disabled(model.id == models.active.id)
                             }.buttonStyle(.bordered)
                                 .disabled(models.downloadingID != nil || node.switchingModel)
+                            if !models.installedIDs.contains(model.id) {
+                                Text(models.downloadingID == model.id ? "文件下载并校验完成后，“加载”会自动变为可用。" : "尚未下载完整，暂不能加载。")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
                         }.padding(.vertical, 4)
                     }
                 }

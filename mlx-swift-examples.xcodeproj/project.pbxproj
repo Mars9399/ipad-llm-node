@@ -311,6 +311,7 @@
 				LLMEval/Services/IncrementalTokenText.swift,
 				LLMEval/Models/ModelCatalog.swift,
 				LLMEval/Services/ModelStore.swift,
+				LLMEval/Services/ModelFileDownload.swift,
 				LLMEval/Views/ModelManagerView.swift,
 				LLMEval/PrivacyInfo.xcprivacy,
 				LLMEval/ViewModels/DeviceStat.swift,
