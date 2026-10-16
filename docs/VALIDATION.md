@@ -41,7 +41,7 @@ python3 Scripts/test-model-management.py --report .local/model-management-verifi
 
 这组短测内核 footprint 峰值约 3.303GB，不是最大上下文/最大输出所有组合的峰值证明。按输入从短到长执行，未控制顺序。短请求约 25 token/s 不替代 20 分钟持续结果。
 
-本项目未宣称达到 M1 最优利用率。8B 4bit/3bit 是可下载候选，其完整运行、持续性能与质量仍需另外验证。
+本项目未宣称达到 M1 最优利用率。本节容量测试时 8B 仍是候选；后续 8B 4bit 短生成验证见文末，其持续性能与质量、8B 3bit 的完整运行仍需另外验证。
 
 ## 最终版本 API 回归
 
@@ -66,3 +66,7 @@ python3 Scripts/test-download-transport.py
 ```
 
 修复版本的真机验证确认：旧下载中有 3.26GB 的权重前缀与固定模型指纹匹配并被恢复；后续累计约 3.83GB 的文件在 App 更新后仍保留。恢复 0.6B 缓存并完成全部文件校验后，installed=true，可激活且生成“你好！”，随后切回 4B；8B 再次开始时从保留的位置续传。这些检查不代表 8B 已完成下载或运行。校验循环按块释放临时数据，避免大模型校验累积整份文件内存。
+
+随后，8B 4bit 完成全部 4,366,158,399 字节文件下载和完整校验，installed=true，激活成功并实际生成中文回答。模型为 `Qwen/Qwen3-8B-MLX-4bit`，revision `383413e909f3bc5303ce195ebbdf0339c5a1a2a3`，4bit/group128。一次 25 token 输入、28 token 输出的短请求记录：解码 14.97 token/s，首 token 1.103 秒，进程 footprint 峰值 4.535GB，MLX 峰值 4.444GB，thermal normal，原始输出 token 与库计数一致。该次请求总计约 3.02 秒；这些数值不是持续性能基准。
+
+重启 App 后仍恢复 8B，4B/8B/0.6B 均保留可切换。真机截图确认模型管理内 4B 显示可用“加载”，8B 显示“已校验”和“重新加载”。修复版 USB API 回归 35/35 通过；8B 尚未进行 4B 那样的 20 分钟持续测试。
